@@ -2,7 +2,9 @@ package EngineCore;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.windows.POINTL;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
@@ -63,6 +65,40 @@ public class BShader {
         uniforms.put(uniformName,uniformLocation);
     }
 
+    public void createPointLightUniform(String uniformName) throws Exception{
+        createUniform(uniformName + ".colour");
+        createUniform(uniformName + ".position");
+        createUniform(uniformName + ".intensity");
+        createUniform(uniformName + ".att.constant");
+        createUniform(uniformName + ".att.linear");
+        createUniform(uniformName + ".att.exponent");
+    }
+
+    public void createMaterialUniform(String uniformName) throws Exception{
+        createUniform(uniformName + ".ambient");
+        createUniform(uniformName + ".diffuse");
+        createUniform(uniformName + ".specular");
+        createUniform(uniformName + ".hasTexture");
+        createUniform(uniformName + ".reflectance");
+    }
+
+    public void createDirectionalLightUniform(String uniformName) throws Exception{
+        createUniform(uniformName +".colour");
+        createUniform(uniformName +".direction");
+        createUniform(uniformName +".intensity");
+    }
+
+    public void createSpotLightUniform(String uniformName) throws Exception{
+        createUniform(uniformName + ".colour");
+        createUniform(uniformName + ".position");
+        createUniform(uniformName + ".direction");
+        createUniform(uniformName + ".angle");
+        createUniform(uniformName + ".intensity");
+        createUniform(uniformName + ".att.constant");
+        createUniform(uniformName + ".att.linear");
+        createUniform(uniformName + ".att.exponent");
+    }
+
     public void setUniform(String uniformName, Matrix4f value){
         //Dump matrix into a float buffer
         try(MemoryStack stack = MemoryStack.stackPush()){
@@ -76,8 +112,53 @@ public class BShader {
         glUniform1i(uniforms.get(uniformName), value);
     }
 
+    public void setUniform(String uniformName, float value){
+        glUniform1f(uniforms.get(uniformName), value);
+    }
+
     public void setUniform(String uniformName, Vector3f value){
         glUniform3f(uniforms.get(uniformName), value.x, value.y,value.z);
+    }
+
+    public void setUniform(String uniformName, Vector4f value){
+        glUniform4f(uniforms.get(uniformName), value.x, value.y,value.z,value.w);
+    }
+
+    public void setUniform(String uniformName, SpotLight spotLight){
+        setUniform(uniformName + ".colour", spotLight.getColour());
+        setUniform(uniformName + ".position", spotLight.getPosition());
+        setUniform(uniformName + ".direction", spotLight.getConeDirection());
+        setUniform(uniformName + ".angle", spotLight.getConeAngle());
+        setUniform(uniformName + ".intensity", spotLight.getIntensity());
+        SpotLight.Attenuation att = spotLight.getAttenuation();
+        setUniform(uniformName + ".att.constant", att.getConstant());
+        setUniform(uniformName + ".att.linear", att.getLinear());
+        setUniform(uniformName + ".att.exponent", att.getExponent());
+    }
+
+    public void setUniform(String uniformName, PointLight pointLight){
+        setUniform(uniformName + ".colour", pointLight.getColour());
+        setUniform(uniformName + ".position", pointLight.getPosition());
+        setUniform(uniformName + ".intensity", pointLight.getIntensity());
+        PointLight.Attenuation att = pointLight.getAttenuation();
+        setUniform(uniformName + ".att.constant", att.getConstant());
+        setUniform(uniformName + ".att.linear", att.getLinear());
+        setUniform(uniformName + ".att.exponent", att.getExponent());
+
+    }
+
+    public void setUniform(String uniformName, BMaterial mat){
+        setUniform(uniformName + ".ambient", mat.getAmbientColour());
+        setUniform(uniformName + ".diffuse", mat.getDiffuseColour());
+        setUniform(uniformName + ".specular", mat.getSpecularColour());
+        setUniform(uniformName + ".hasTexture", mat.isTextured() ? 1 : 0);
+        setUniform(uniformName + ".reflectance", mat.getReflectance());
+    }
+
+    public void setUniform(String uniformName, DirectionalLight light){
+        setUniform(uniformName + ".colour", light.getColour());
+        setUniform(uniformName + ".direction", light.getDirection());
+        setUniform(uniformName + ".intensity", light.getIntensity());
     }
 
     public void link() throws Exception {

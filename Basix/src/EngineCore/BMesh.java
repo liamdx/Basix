@@ -24,7 +24,8 @@ public class BMesh {
     private final List<Integer> vboIdList;
 
     private final int vertexCount;
-    private BTexture texture;
+
+    private BMaterial mat;
 
     private Vector3f colour;
 
@@ -110,15 +111,15 @@ public class BMesh {
     }
 
     public boolean isTextured(){
-        return this.texture != null;
+        return this.mat.isTextured();
     }
 
-    public BTexture getTexture(){
-        return this.texture;
+    public BMaterial getMaterial(){
+        return this.mat;
     }
 
-    public void setTexture(BTexture texture){
-        this.texture = texture;
+    public void setMaterial(BMaterial mat){
+        this.mat = mat;
     }
 
     public Vector3f getColour(){
@@ -131,11 +132,15 @@ public class BMesh {
 
     public void render(){
 
+        BTexture tex = mat.getTex();
 
-        //Not working for some reason, what GLXX package is this from?
-        GL13.glActiveTexture(GL_TEXTURE0);
+        if (tex != null) {
+            //Not working for some reason, what GLXX package is this from?
+            GL13.glActiveTexture(GL_TEXTURE0);
 
-        glBindTexture(GL_TEXTURE_2D, texture.getId());
+            glBindTexture(GL_TEXTURE_2D, tex.getId());
+        }
+
         //bind to vao
         glBindVertexArray(getVaoId());
         //enable positions buffer
@@ -167,7 +172,10 @@ public class BMesh {
             glDeleteBuffers(vboId);
         }
 
-        texture.cleanUp();
+        BTexture tex = mat.getTex();
+        if(tex != null){
+            tex.cleanUp();
+        }
 
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoId);

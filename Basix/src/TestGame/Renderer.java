@@ -8,6 +8,8 @@ import static org.lwjgl.opengl.GL20.*;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
+
 import org.lwjgl.system.*;
 
 import java.nio.FloatBuffer;
@@ -32,8 +34,11 @@ public class Renderer {
 
 	private final Transformation tranformation;
 
+	private float specularPower;
+
 	public Renderer () {
 		tranformation = new Transformation();
+		specularPower = 10f;
 	}
 	
     public void init(BasixWindow window) throws Exception {
@@ -50,14 +55,16 @@ public class Renderer {
         shaderProgram.createUniform("projectionMatrix");
         shaderProgram.createUniform("modelViewMatrix");
         shaderProgram.createUniform("texture_sampler");
-        shaderProgram.createUniform("colour");
-        shaderProgram.createUniform("useColour");
-
+        shaderProgram.createMaterialUniform("mat");
+        shaderProgram.createUniform("specularPower");
+        shaderProgram.createUniform("ambientLight");
+        shaderProgram.createPointLightUniform("pointLight");
+        shaderProgram.createDirectionalLightUniform("dirLight");
 
     }
 
 
-    public void render(BasixWindow window, BItem[] gameItems, BCamera camera) {
+    public void render(BasixWindow window, BItem[] gameItems, BCamera camera, Vector3f ambientLight, PointLight light, SpotLight spotLight, DirectionalLight dirLight) {
     		clear();
     		
     		if (window.isResized()) {
@@ -73,14 +80,36 @@ public class Renderer {
 
     		Matrix4f viewMatrix = tranformation.getViewMatrix(camera);
 
-			shaderProgram.setUniform("texture_sampler", 0);
+    		shaderProgram.setUniform("ambientLight", ambientLight);
+    		shaderProgram.setUniform("specularPower", specularPower);
+
+			// Get a copy of the light object and transform its position to view coordinates
+			PointLight currPointLight = new PointLight(light);
+			Vector3f lightPos = currPointLight.getPosition();
+			Vector4f aux = new Vector4f(lightPos, 1);
+			aux.mul(viewMatrix);
+			lightPos.x = aux.x;
+			lightPos.y = aux.y;
+			lightPos.z = aux.z;
+			shaderProgram.setUniform("pointLight", currPointLight);
+
+			DirectionalLight currentDirLight = new DirectionalLight(dirLight);
+			Vector4f dir = new Vector4f(currentDirLight.getDirection(), 0);
+			dir.mul(viewMatrix);
+			currentDirLight.setDirection(new Vector3f(dir.x, dir.y, dir.z));
+			shaderProgram.setUniform("dirLight", currentDirLight);
+
+
 
 			for(BItem item : gameItems){
+				//might need to be outside of this loop
+				shaderProgram.setUniform("texture_sampler", 0);
 				BMesh mesh = item.getMesh();
     			Matrix4f modelViewMatrix = tranformation.getModelViewMatrix(item, viewMatrix);
     			shaderProgram.setUniform("modelViewMatrix", modelViewMatrix);
     			//shaderProgram.setUniform("colour", mesh.getColour());
-    			shaderProgram.setUniform("useColour", mesh.isTextured() ? 0 : 1);
+    			//shaderProgram.setUniform("useColour", mesh.isTextured() ? 0 : 1);
+				shaderProgram.setUniform("mat", mesh.getMaterial());
     			item.getMesh().render();
 			}
     		shaderProgram.unbind();
@@ -92,8 +121,6 @@ public class Renderer {
     		if(shaderProgram != null) {
     			shaderProgram.cleanup();
     		}
-    		
-    
     }
 
 	public void clear() {

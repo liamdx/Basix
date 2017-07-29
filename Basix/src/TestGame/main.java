@@ -9,7 +9,7 @@ public class main {
         try {
             boolean vSync = true;
             IBasixLogic gameLogic = new TestGameLogic();
-            BasixEngine gameEng = new BasixEngine("Make a fucking quad you little bitch", 600, 480, vSync, gameLogic);
+            BasixEngine gameEng = new BasixEngine("BasixTest", 1280, 720, vSync, gameLogic);
             gameEng.start();
         } catch (Exception excp) {
             excp.printStackTrace();

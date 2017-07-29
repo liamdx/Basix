@@ -8,7 +8,7 @@ public class BasixEngine implements Runnable {
 
     public static final int TARGET_FPS = 75;
 
-    public static final int TARGET_UPS = 60;
+    public static final int TARGET_UPS = 30;
 
     private final BasixWindow window;
 
